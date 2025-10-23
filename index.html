@@ -150,6 +150,10 @@
                 <div>最高スコア</div>
                 <div id="highScore">0</div>
             </div>
+            <div class="score-item">
+                <div>速度</div>
+                <div id="speedDisplay">遅い</div>
+            </div>
         </div>
 
         <canvas id="gameCanvas" width="400" height="400"></canvas>
@@ -177,6 +181,7 @@
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
         const highScoreElement = document.getElementById('highScore');
+        const speedDisplayElement = document.getElementById('speedDisplay');
         const gameOverElement = document.getElementById('gameOver');
         const finalScoreElement = document.getElementById('finalScore');
         const startBtn = document.getElementById('startBtn');
@@ -193,9 +198,24 @@
         let gameLoop;
         let isGameRunning = false;
         let isPaused = false;
-        let gameSpeed = 100;
+        let gameSpeed = 200; // 初期速度を遅く（数値が大きいほど遅い）
+        const minSpeed = 50; // 最速スピード
+        const speedIncrement = 10; // スコアごとに速くなる量
 
         highScoreElement.textContent = highScore;
+
+        // 速度表示を更新する関数
+        function updateSpeedDisplay() {
+            if (gameSpeed >= 150) {
+                speedDisplayElement.textContent = '遅い';
+            } else if (gameSpeed >= 100) {
+                speedDisplayElement.textContent = '普通';
+            } else if (gameSpeed >= 70) {
+                speedDisplayElement.textContent = '速い';
+            } else {
+                speedDisplayElement.textContent = '超速！';
+            }
+        }
 
         // キーボード操作
         document.addEventListener('keydown', changeDirection);
@@ -235,6 +255,8 @@
             scoreElement.textContent = score;
             isPaused = false;
             isGameRunning = true;
+            gameSpeed = 200; // スピードを初期値にリセット
+            updateSpeedDisplay(); // 速度表示を更新
             gameOverElement.classList.remove('show');
             startBtn.textContent = 'ゲーム中...';
             startBtn.disabled = true;
@@ -294,6 +316,14 @@
                     highScore = score;
                     highScoreElement.textContent = highScore;
                     localStorage.setItem('snakeHighScore', highScore);
+                }
+                
+                // スコアに応じてスピードアップ
+                if (gameSpeed > minSpeed) {
+                    gameSpeed = Math.max(minSpeed, 200 - Math.floor(score / 10) * speedIncrement);
+                    clearInterval(gameLoop);
+                    gameLoop = setInterval(update, gameSpeed);
+                    updateSpeedDisplay();
                 }
             } else {
                 snake.pop();
